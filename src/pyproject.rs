@@ -13,16 +13,16 @@ pub struct Pyproject {
     #[serde(skip_serializing)]
     folder: PathBuf,
     #[serde(skip_serializing)]
-    minimum: bool,
+    complete: bool,
     pub build_system: BuildSystem,
     pub project: Project,
 }
 
 impl Pyproject {
-    pub fn new(folder: PathBuf, minimum: bool) -> Self {
+    pub fn new(folder: PathBuf, complete: bool) -> Self {
         Pyproject {
             folder,
-            minimum,
+            complete,
             build_system: BuildSystem::default(),
             project: Project::default(),
         }
@@ -72,7 +72,7 @@ impl Pyproject {
             .default("0.1.0".to_string())
             .interact_text()?;
 
-        if !self.minimum {
+        if self.complete {
             self.project.description = Input::with_theme(&theme)
                 .with_prompt("description")
                 .allow_empty(true)
