@@ -1,0 +1,41 @@
+name: default
+kind: pipeline
+type: docker
+
+steps:
+  - name: build
+    image: rust:1
+    commands:
+      - cargo run -- --help
+
+  - name: deploy:crate
+    image: rust:1
+    environment:
+      CARGO_REGISTRY_TOKEN:
+        from_secret: CARGO_REGISTRY_TOKEN
+    commands:
+      - cargo publish --token $
+    when:
+      event:
+        include:
+          - tag
+    depends_on:
+      - build
+
+  - name: deploy:wheel
+    image: rust:1
+    environment:
+      MATURIN_URL:
+        from_secret: MATURIN_URL
+      MATURIN_USERNAME:
+        from_secret: MATURIN_USERNAME
+      MATURIN_PASSWORD:
+        from_secret: MATURIN_PASSWORD
+    commands:
+      - maturin publish
+    when:
+      event:
+        include:
+          - tag
+    depends_on:
+      - build
