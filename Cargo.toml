@@ -5,8 +5,8 @@ edition = "2021"
 authors = ["Antoine Langlois <antoine.l@antoine-langlois.net>"]
 license = "GPL-3.0-or-later"
 description = "Small CLI tool to initialize a python project"
-homepage = "https://gitea.antoine-langlois.net/DataHeart/pynit"
-repository = "https://gitea.antoine-langlois.net/DataHeart/pynit"
+homepage = "https://gitea.antoine-langlois.net/DataHearth/pynit"
+repository = "https://gitea.antoine-langlois.net/DataHearth/pynit"
 keywords = ["automation", "CLI"]
 
 [dependencies]
