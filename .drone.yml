@@ -14,7 +14,7 @@ steps:
       CARGO_REGISTRY_TOKEN:
         from_secret: CARGO_REGISTRY_TOKEN
     commands:
-      - cargo publish --token $
+      - cargo publish
     when:
       event:
         include:
