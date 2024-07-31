@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  deploy-crate:
+    runs-on: debian-rust
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Publish crate
+        run: cargo publish
+
+  deploy-wheel:
+    runs-on: debian-rust
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Publish wheel
+        env:
+          MATURIN_REPOSITORY_URL: ${{ secrets.PIP_REPOSITORY }}
+          MATURIN_USERNAME: datahearth
+          MATURIN_PYPI_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          pip install maturin
+          maturin publish

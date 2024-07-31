@@ -1,8 +1,7 @@
 # pynit
 
 [![License](https://img.shields.io/crates/l/pynit)](https://gitea.antoine-langlois.net/DataHearth/pynit/src/branch/main/LICENSE)
-[![Build Status](https://drone.antoine-langlois.net/api/badges/DataHearth/pynit/status.svg?ref=refs/heads/main)](https://drone.antoine-langlois.net/DataHearth/pynit)
-[![Build Status](https://img.shields.io/crates/v/pynit)](https://crates.io/crates/pynit)
+[![Version](https://img.shields.io/crates/v/pynit)](https://crates.io/crates/pynit)
 
 ---
 

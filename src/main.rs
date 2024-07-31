@@ -7,8 +7,11 @@ use std::{
 
 use anyhow::Result;
 use clap::Parser;
+use license::get_license;
 use pyproject::Pyproject;
 
+mod components;
+mod license;
 mod pyproject;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
@@ -81,8 +84,13 @@ fn initialize_folder(
     let mut pypro = Pyproject::new(folder.clone(), complete);
 
     pypro.ask_inputs()?;
-    let project_name = pypro.get_project_name();
 
+    let project_name = pypro.get_project_name();
+    
+    fs::write(
+        folder.join("LICENSE"),
+        get_license(pypro.get_license_spdx())?.body,
+    )?;
     pypro.create_file()?;
 
     if let Some(layout) = layout {

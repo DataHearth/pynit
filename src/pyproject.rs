@@ -1,9 +1,14 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::{anyhow, Result};
-use dialoguer::{theme::ColorfulTheme, Input};
+use dialoguer::theme::ColorfulTheme;
 use regex::Regex;
 use serde::Serialize;
+
+use crate::{
+    components::{input, input_list, select},
+    license::get_license_spdx,
+};
 
 const PYPROJECT: &str = "pyproject.toml";
 
@@ -34,98 +39,83 @@ impl Pyproject {
     pub fn ask_inputs(&mut self) -> Result<()> {
         let theme = ColorfulTheme::default();
 
-        self.build_system.requires = Input::<String>::with_theme(&theme)
-            .with_prompt("build dependencies (comma separated)")
-            .default("setuptools,wheel".to_string())
-            .interact_text()?
-            .split(',')
-            .filter(|v| !v.is_empty())
-            .map(|v| v.to_string())
-            .collect();
-        self.build_system.build_backend = Input::with_theme(&theme)
-            .with_prompt("build back-end")
-            .default("setuptools.build_meta".to_string())
-            .interact_text()?;
+        self.build_system.requires = input_list(
+            &theme,
+            "build dependencies (comma separated)",
+            false,
+            Some("setuptools,wheel".to_string()),
+            |v| v.to_string(),
+        )?;
+        self.build_system.build_backend = input::<String>(
+            &theme,
+            "build back-end",
+            false,
+            Some("setuptools.build_meta".to_string()),
+        )?;
 
         // ? might want to switch to OsString instead, if the Serialize macro supports it
-        let folder = match self
-            .folder
-            .file_name()
-            .ok_or(anyhow!("project can't terminate by \"..\""))?
-            .to_str()
-        {
-            Some(v) => Some(v.to_string()),
-            None => None,
-        };
-        let mut input: Input<String> = Input::with_theme(&theme);
-        if let Some(folder) = folder {
-            self.project.name = input
-                .with_prompt("project name")
-                .default(folder)
-                .interact_text()?;
-        } else {
-            self.project.name = input.with_prompt("project name").interact_text()?;
-        }
-
-        self.project.version = Input::with_theme(&theme)
-            .with_prompt("version")
-            .default("0.1.0".to_string())
-            .interact_text()?;
+        self.project.name = input::<String>(
+            &theme,
+            "project name",
+            false,
+            match self
+                .folder
+                .file_name()
+                .ok_or(anyhow!("project can't terminate by \"..\""))?
+                .to_str()
+            {
+                Some(v) => Some(v.to_string()),
+                None => None,
+            },
+        )?;
+        self.project.version =
+            input::<String>(&theme, "version", false, Some("0.1.0".to_string()))?;
 
         if self.complete {
-            self.project.description = Input::with_theme(&theme)
-                .with_prompt("description")
-                .allow_empty(true)
-                .interact_text()?;
-            self.project.readme = Input::with_theme(&theme)
-                .with_prompt("readme")
-                .allow_empty(true)
-                .interact_text()?;
-            self.project.requires_python = Input::with_theme(&theme)
-                .with_prompt("minimum python version")
-                .allow_empty(true)
-                .interact_text()?;
-            self.project.license = Input::with_theme(&theme)
-                .with_prompt("license")
-                .allow_empty(true)
-                .interact_text()?;
-            self.project.authors = Input::<String>::with_theme(&theme)
-            .with_prompt(
-                r#"authors (e.g: "Antoine Langlois";"name="Antoine L",email="email@domain.net"")"#,
-            )
-            .allow_empty(true)
-            .interact_text()?
-            .split(';')
-            .filter(|v| !v.is_empty())
-            .map(|v| self.parse_contributor(v))
-            .collect();
-            self.project.maintainers = Input::<String>::with_theme(&theme)
-            .with_prompt(
-                r#"maintainers (e.g: "Antoine Langlois";"name="Antoine L",email="email@domain.net"")"#,
-            )
-            .allow_empty(true)
-            .interact_text()?
-            .split(';')
-            .filter(|v| !v.is_empty())
-            .map(|v| self.parse_contributor(v))
-            .collect();
-            self.project.keywords = Input::<String>::with_theme(&theme)
-                .with_prompt("keywords (e.g: KEYW1;KEYW2)")
-                .allow_empty(true)
-                .interact_text()?
-                .split(';')
-                .filter(|v| !v.is_empty())
-                .map(|v| v.to_string())
-                .collect();
-            self.project.classifiers = Input::<String>::with_theme(&theme)
-                .with_prompt("classifiers (e.g: CLASS1;CLASS2)")
-                .allow_empty(true)
-                .interact_text()?
-                .split(';')
-                .filter(|v| !v.is_empty())
-                .map(|v| v.to_string())
-                .collect();
+            self.ask_complete(&theme)?;
         }
+
+        Ok(())
+    }
+
+    fn ask_complete(&mut self, theme: &ColorfulTheme) -> Result<()> {
+        self.project.description = input::<String>(theme, "description", true, None)?;
+        self.project.readme = input::<String>(theme, "readme", true, None)?;
+        self.project.requires_python =
+            input::<String>(theme, "minimum python version", true, None)?;
+        let license_spdx = get_license_spdx()?;
+        let license_index = select(
+            theme,
+            "license",
+            license_spdx
+                .binary_search(&"MIT".into())
+                .or(Err(anyhow!("MIT license not found")))?,
+            &license_spdx[..],
+        )?;
+
+        self.project.license = license_spdx[license_index].clone();
+        self.project.authors = input_list(
+            theme,
+            r#"authors (e.g: "Antoine Langlois";"name="Antoine L",email="email@domain.net"")"#,
+            true,
+            None,
+            |v| self.parse_contributor(v),
+        )?;
+        self.project.maintainers = input_list(
+            theme,
+            r#"maintainers (e.g: "Antoine Langlois";"name="Antoine L",email="email@domain.net"")"#,
+            true,
+            None,
+            |v| self.parse_contributor(v),
+        )?;
+        self.project.keywords =
+            input_list(theme, "keywords (e.g: KEYW1;KEYW2)", true, None, |v| {
+                v.to_string()
+            })?;
+        self.project.classifiers =
+            input_list(theme, "classifiers (e.g: CLASS1;CLASS2)", true, None, |v| {
+                v.to_string()
+            })?;
 
         Ok(())
     }
@@ -157,6 +147,11 @@ impl Pyproject {
         // ? clone or maybe something else ?
         self.project.name.clone()
     }
+
+    pub fn get_license_spdx(&self) -> String {
+        self.project.license.clone()
+    }
+
     /// Consume self and write everything to a `self.folder/pyproject.toml`
     pub fn create_file(self) -> Result<()> {
         fs::write(self.folder.join(PYPROJECT), toml::to_vec(&self)?)?;
