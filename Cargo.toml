@@ -1,0 +1,12 @@
+[package]
+name = "pynit"
+version = "0.1.0"
+edition = "2021"
+authors = ["Antoine Langlois <antoine.l@antoine-langlois.net>"]
+license = "GPL-3.0-or-later"
+description = "small CLI tool to initialize a python project"
+homepage = "https://gitea.antoine-langlois.net/DataHeart/pynit"
+repository = "https://gitea.antoine-langlois.net/DataHeart/pynit"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
