@@ -7,6 +7,7 @@ license = "GPL-3.0-or-later"
 description = "Small CLI tool to initialize a python project"
 homepage = "https://gitea.antoine-langlois.net/DataHeart/pynit"
 repository = "https://gitea.antoine-langlois.net/DataHeart/pynit"
+keywords = ["automation", "CLI"]
 
 [dependencies]
 anyhow = "1.0"
