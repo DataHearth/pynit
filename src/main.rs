@@ -2,7 +2,7 @@ use std::{
     env,
     fs::{self, File},
     path::PathBuf,
-    process::Command,
+    process::{Command, Stdio},
 };
 
 use anyhow::Result;
@@ -25,11 +25,11 @@ struct Args {
     verbose: bool,
 
     /// Initialize with minimal fields for "pyproject.toml"
-    #[arg(short, long, default_value_t = true)]
-    minimum: bool,
+    #[arg(short, long)]
+    complete: bool,
 
     /// Initialize folder with a git repository
-    #[arg(long, default_value_t = true)]
+    #[arg(long)]
     git: bool,
 
     /// Initialize a new virtual environment with given name in initialized directory
@@ -58,12 +58,12 @@ fn main() -> Result<()> {
             fs::create_dir(&folder)?;
             let folder = folder.canonicalize()?;
 
-            initialize_folder(folder, args.minimum, args.layout, args.venv, args.git)?;
+            initialize_folder(folder, args.complete, args.layout, args.venv, args.git)?;
         }
         Subcommands::Init {} => {
             let folder = env::current_dir()?;
 
-            initialize_folder(folder, args.minimum, args.layout, args.venv, args.git)?;
+            initialize_folder(folder, args.complete, args.layout, args.venv, args.git)?;
         }
     };
 
@@ -72,13 +72,13 @@ fn main() -> Result<()> {
 
 fn initialize_folder(
     folder: PathBuf,
-    minimum: bool,
+    complete: bool,
     layout: Option<Layout>,
     venv: Option<String>,
     git: bool,
 ) -> Result<()> {
     // todo: avoid clone and maybe find a better way
-    let mut pypro = Pyproject::new(folder.clone(), minimum);
+    let mut pypro = Pyproject::new(folder.clone(), complete);
 
     pypro.ask_inputs()?;
     let project_name = pypro.get_project_name();
@@ -107,12 +107,14 @@ fn initialize_folder(
         Command::new("python3")
             .args(&["-m", "venv", &venv])
             .current_dir(&folder)
+            .stdout(Stdio::null())
             .status()?;
     }
     if git {
         Command::new("git")
             .args(&["init"])
             .current_dir(&folder)
+            .stdout(Stdio::null())
             .status()?;
         fs::write(
             folder.join(".gitignore"),
