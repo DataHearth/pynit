@@ -1,6 +1,12 @@
 # pynit
 
-`pynit` speed up the process of creating a new python project. It can initialise the project with `git`,
+[![License](https://img.shields.io/crates/l/pynit)](https://gitea.antoine-langlois.net/DataHearth/pynit/src/branch/main/LICENSE)
+[![Build Status](https://drone.antoine-langlois.net/api/badges/DataHearth/pynit/status.svg?ref=refs/heads/main)](https://drone.antoine-langlois.net/DataHearth/pynit)
+[![Build Status](https://img.shields.io/crates/v/pynit)](https://crates.io/crates/pynit)
+
+---
+
+`pynit` speeds up the process of creating a new python project. It can initialise the project with `git`,
 a virtual environment (using the `venv` module) and creating a [basic folder structure](https://setuptools.pypa.io/en/latest/userguide/package_discovery.html) if wanted.
 
 ## Usage
